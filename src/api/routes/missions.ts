@@ -295,12 +295,17 @@ async function createMission(ctx: ApiCtx): Promise<void> {
   sendJson(ctx.res, 200, { ok: true, mission, url: missionUrl(ctx, mission.id) });
 }
 
+function notAssignee(ctx: ApiCtx): void {
+  sendJson(ctx.res, 403, { error: "forbidden", message: "only the mission's assignee can do that" });
+}
+
 async function answerMission(ctx: ApiCtx): Promise<void> {
   const m = findMission(ctx);
   if (!m) return;
   const b = isObj(ctx.body) ? ctx.body : {};
   const answer = str(b.answer, 4000);
   if (!answer) return sendJson(ctx.res, 400, { error: "bad_request", message: "pass `answer`" });
+  if (!isMine(m, viewerOf(ctx))) return notAssignee(ctx);
   if (m.status !== "open")
     return sendJson(ctx.res, 409, { error: "already_answered", message: "this mission already has an answer" });
   m.status = "answered";
@@ -316,6 +321,7 @@ async function answerMission(ctx: ApiCtx): Promise<void> {
 async function skipMission(ctx: ApiCtx): Promise<void> {
   const m = findMission(ctx);
   if (!m) return;
+  if (!isMine(m, viewerOf(ctx))) return notAssignee(ctx);
   if (m.status !== "open")
     return sendJson(ctx.res, 409, { error: "not_open", message: "only open missions can be skipped" });
   const b = isObj(ctx.body) ? ctx.body : {};
@@ -344,11 +350,13 @@ async function scoreMission(ctx: ApiCtx): Promise<void> {
   const b = isObj(ctx.body) ? ctx.body : {};
   const bonus = Number(b.bonus);
   const reason = str(b.reason, 240);
-  if (!Number.isFinite(bonus) || bonus < 0 || bonus > 50 || !reason) {
-    return sendJson(ctx.res, 400, { error: "bad_request", message: "pass `bonus` (0-50) and `reason`" });
+  if (!Number.isFinite(bonus) || bonus < 0 || bonus > 30 || !reason) {
+    return sendJson(ctx.res, 400, { error: "bad_request", message: "pass `bonus` (0-30) and `reason`" });
   }
-  if (m.status === "open")
+  if (m.status !== "answered" && m.status !== "done")
     return sendJson(ctx.res, 409, { error: "not_answered", message: "score a mission after it's answered" });
+  if (m.bonus !== undefined)
+    return sendJson(ctx.res, 409, { error: "already_scored", message: "this mission already has a bonus" });
   m.bonus = Math.round(bonus);
   m.bonusReason = reason;
   post({ kind: "points", person: m.assigneeName, points: m.bonus, text: `Bonus: ${reason}` });
@@ -363,7 +371,7 @@ async function completeMission(ctx: ApiCtx): Promise<void> {
   const note = str(b.note, 500);
   if (!note)
     return sendJson(ctx.res, 400, { error: "bad_request", message: "pass `note` (what changed) and optionally `url`" });
-  if (m.status === "open")
+  if (m.status !== "answered")
     return sendJson(ctx.res, 409, { error: "not_answered", message: "complete a mission after it's answered" });
   const url = str(b.url, 500);
   m.status = "done";

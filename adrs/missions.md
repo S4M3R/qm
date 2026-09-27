@@ -26,3 +26,8 @@ What it does not do yet
 - The web page polls every 3 seconds instead of using the delivery stream.
 - The GIF picker is a fixed set of GIPHY reactions; search needs a GIPHY API key.
 - Slack delivery was not exercised end to end at the hackathon.
+- The demo endpoints (`/reset`, `/people`, `/feed`) are open to any signed-in member. They exist to seed a local demo and should be admin-only or removed before a shared deployment. Scoring and completing are open to any caller with an answered mission; in practice that is the assignee's own agent session.
+- App previews fetch the app and render it in a sandboxed `srcdoc` frame. That works for same-origin apps with inline or absolute assets; apps on other origins show an "Open app" link instead.
+- Leaderboard rows are keyed by display name, so the same person under two names gets two rows.
+- The board is one document per org behind a per-instance queue. Slack calls happen inside the queue, and missions are never pruned; both need attention before heavy use.
+- Weeks use the core server's time zone while the countdown uses the browser's.
