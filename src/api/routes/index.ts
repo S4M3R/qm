@@ -26,6 +26,8 @@ import { reachRoutes } from "./reach.ts";
 import { directoryRoutes } from "./directory.ts";
 import { contextRoutes } from "./context.ts";
 import { pinRoutes } from "./pins.ts";
+import { missionRoutes } from "./missions.ts";
+import { profilePhotoRoutes } from "./profile-photos.ts";
 import { surfaceCacheRoutes } from "./surface-cache.ts";
 import { environmentRoutes } from "./environments.ts";
 import { emojiRoutes } from "./emoji.ts";
@@ -109,6 +111,8 @@ export const apiRoutes: ReadonlyArray<Route<ApiCtx>> = [
   ...directoryRoutes,
   ...contextRoutes,
   ...pinRoutes,
+  ...missionRoutes,
+  ...profilePhotoRoutes,
   ...surfaceCacheRoutes,
   ...environmentRoutes,
   ...emojiRoutes,

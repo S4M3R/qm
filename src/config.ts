@@ -138,6 +138,7 @@ export interface Config {
   secretsPrefix: string;
   apiBaseUrl?: string;
   publicUrl?: string;
+  missionsSlackWebhookUrl?: string;
   gmailPubSub?: { topic: string; audience: string; serviceAccount: string };
   publicWebUrl?: string;
   flyAppName?: string;
@@ -1573,6 +1574,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     layerEnv: { ...env },
     ...(publicApiUrl ? { apiBaseUrl: publicApiUrl } : {}),
     ...(publicUrl ? { publicUrl } : {}),
+    ...(env.MISSIONS_SLACK_WEBHOOK_URL ? { missionsSlackWebhookUrl: env.MISSIONS_SLACK_WEBHOOK_URL } : {}),
     ...(env.GMAIL_PUBSUB_TOPIC && env.GMAIL_PUBSUB_AUDIENCE && env.GMAIL_PUBSUB_SERVICE_ACCOUNT
       ? {
           gmailPubSub: {

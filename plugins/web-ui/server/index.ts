@@ -2955,6 +2955,63 @@ const apiRoutes: readonly WebRoute[] = [
   },
   {
     method: "GET",
+    path: "/api/profile-photo",
+    handle: (c) => relayCore(c.res, "GET", `/v1/profile-photo?principalId=${encodeURIComponent(c.user)}`),
+  },
+  {
+    method: "GET",
+    path: "/api/profile-photos",
+    handle: (c) =>
+      relayCore(
+        c.res,
+        "GET",
+        `/v1/profile-photos?principals=${encodeURIComponent(c.url.searchParams.get("principals") ?? "")}`,
+      ),
+  },
+  {
+    method: "POST",
+    path: "/api/profile-photo",
+    handle: async (c) =>
+      relayCore(
+        c.res,
+        "POST",
+        `/v1/profile-photo?principalId=${encodeURIComponent(c.user)}`,
+        (await readBody(c.req)) || "{}",
+      ),
+  },
+  {
+    method: "GET",
+    path: "/api/missions",
+    handle: (c) => relayCore(c.res, "GET", `/v1/missions?principalId=${encodeURIComponent(c.user)}`),
+  },
+  ...(
+    [
+      "",
+      "/people",
+      "/reset",
+      "/chat",
+      "/feed",
+      "/:id/answer",
+      "/:id/session",
+      "/:id/skip",
+      "/:id/score",
+      "/:id/complete",
+    ] as const
+  ).map((suffix) => ({
+    method: "POST" as const,
+    path: `/api/missions${suffix}`,
+    handle: async (c: WebCtx) => {
+      const target = suffix.replace(":id", encodeURIComponent(c.params.id ?? ""));
+      return relayCore(
+        c.res,
+        "POST",
+        `/v1/missions${target}?principalId=${encodeURIComponent(c.user)}`,
+        (await readBody(c.req)) || "{}",
+      );
+    },
+  })),
+  {
+    method: "GET",
     path: "/api/crons",
     handle: async (c) => {
       const { res, user } = c;

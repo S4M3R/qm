@@ -26,6 +26,7 @@ const VIEW_TITLES: Record<View, string> = {
   deploys: "Apps",
   memory: "Memory",
   skills: "Skills",
+  missions: "Missions",
   settings: "Settings",
 };
 

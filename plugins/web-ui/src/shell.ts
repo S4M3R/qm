@@ -26,6 +26,7 @@ import {
   Search,
   Settings,
   ShieldUser,
+  Target,
   Webhook,
   type IconNode,
 } from "lucide";
@@ -91,6 +92,8 @@ import { attachTooltip, hideTooltip, tip } from "./tooltip";
 import { clearConnectorNotice, noteConnectorResult, renderConnectors, resetKeychainState } from "./connectors";
 import { openDeployById, renderDeploys } from "./deploys";
 import { renderMemory, resetMemoryState } from "./memory";
+import { openMissionCount, renderMissions, routeMissionsHistory, startMissionsWatch } from "./missions";
+import { avatarTpl, loadProfilePhoto, onProfilePhotoChange, profilePhotoState } from "./profile-photo";
 import { renderCalendar } from "./calendar";
 import {
   inboxOpenCount,
@@ -224,6 +227,7 @@ const ICON = {
   loops: Repeat,
   memory: Brain,
   skills: Box,
+  missions: Target,
   home: House,
   browse: LayoutGrid,
 };
@@ -567,6 +571,7 @@ export function renderSidebarFooter(): void {
           aria-expanded=${userMenuOpen ? "true" : "false"}
           @click=${toggleUserMenu}
         >
+          ${avatarTpl(appState.me?.displayName?.trim() || appState.me?.user || "", profilePhotoState.mine, "user-avatar")}
           <span class="user-name">${appState.me?.displayName?.trim() || appState.me?.user || ""}</span>
         </button>
         ${
@@ -608,6 +613,18 @@ export function renderSidebarTop(): void {
     >
       ${icon(glyph, 17)}<span>${label}</span>
     </a>`;
+  const missionsNavRow = () => {
+    const count = openMissionCount();
+    return html`<a
+      class="navrow ${highlighted("missions") ? "active" : ""}"
+      href=${deepLinkPath(UI_BASE, "missions", null)}
+      data-view="missions"
+      aria-label="Missions"
+      ${tip(sidebarOpen ? "" : "Missions")}
+    >
+      ${icon(ICON.missions, 17)}<span>Missions</span>${count > 0 ? html`<span class="nav-badge" aria-label=${`${count} open`}>${count}</span>` : nothing}
+    </a>`;
+  };
   const actionRow = (glyph: IconNode, label: string, run: () => void) =>
     html`<button
       class="navrow"
@@ -625,7 +642,7 @@ export function renderSidebarTop(): void {
   render(
     html`
       <nav class="nav quick-nav" @click=${onNavClick}>
-        ${navRow("chats", ICON.home, "Home")}
+        ${navRow("chats", ICON.home, "Home")} ${missionsNavRow()}
         ${can("inbox") ? html`${inboxNavRow()} ${navRow("calendar", ICON.calendar, "Calendar")}` : nothing}
         ${actionRow(Search, "Search", () => {
           hideTooltip();
@@ -749,6 +766,9 @@ export function switchView(v: View): void {
     case "skills":
       void renderSkills();
       break;
+    case "missions":
+      void renderMissions();
+      break;
     case "settings":
       renderSettings();
       break;
@@ -816,6 +836,9 @@ function refreshActiveView(v: View): void {
       break;
     case "skills":
       void renderSkills();
+      break;
+    case "missions":
+      void renderMissions();
       break;
     case "settings":
       renderSettings();
@@ -967,13 +990,14 @@ export function replacePanePreservingFocus(host: HTMLElement): void {
 }
 
 window.addEventListener("popstate", () => {
-  const routed = ["crons", "webhooks", "inbox", "skills"];
+  const routed = ["crons", "webhooks", "inbox", "skills", "missions"];
   if (!routed.includes(appState.currentView)) return;
   const { view, item } = parseDeepLink(UI_BASE, location.pathname, location.search);
   if (view !== appState.currentView) return;
   if (view === "crons") routeCronsHistory(item);
   else if (view === "webhooks") routeWebhooksHistory(item);
   else if (view === "skills") routeSkillsHistory(item);
+  else if (view === "missions") routeMissionsHistory(item);
   else routeInboxHistory(item);
 });
 
@@ -1080,6 +1104,12 @@ export async function boot(): Promise<void> {
   ensureDeliveryStream();
   warmDeferredChunks();
   void refreshInbox({ silent: true });
+  startMissionsWatch();
+  onProfilePhotoChange(() => {
+    renderSidebarFooter();
+    if (appState.currentView === "settings") renderSettings();
+  });
+  void loadProfilePhoto();
   const connectedProvider = params.get("status") === "connected" ? params.get("connector") : null;
   if (connectedProvider) markConnectorConnected(connectedProvider);
   const viewIntent = isView(wanted) && canView(wanted) && wanted !== "chats";

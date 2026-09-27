@@ -374,6 +374,42 @@ const FAMILIES: AgentApiFamily[] = [
     ],
   },
   {
+    match: (m, p) =>
+      (m === "GET" && p === "/v1/missions") ||
+      (m === "POST" && /^\/v1\/missions(\/[^/]+\/(answer|score|complete|session|skip))?$/.test(p)),
+    guidance:
+      "Missions route small, focused pieces of work of any kind (reviewing an app or a PR, answering a support ticket, fixing internal docs) to the teammate with the right expertise, and reward them with QM Points on a shared leaderboard. Send a mission when a teammate's app, page, or automation would clearly benefit from a specific expert's judgment (a designer on a UI, finance on numbers, a copywriter on customer-facing text), never for work you can do well yourself. Ask one concrete question, say in one sentence why this person was picked, estimate minutes honestly, and scale points with effort (20-60 typical). When you are working on a mission answer, apply the expert's feedback to the real app, then score the answer (POST /v1/missions/:id/score: bonus 0-30 for how specific and actionable it was, with a one-line reason) and complete the mission (POST /v1/missions/:id/complete) with a short note of what changed and the updated app URL.",
+    routes: [
+      { method: "GET", path: "/v1/missions", summary: "missions, the leaderboard, and recent activity" },
+      {
+        method: "POST",
+        path: "/v1/missions",
+        summary:
+          'send a mission to an expert — body {kind:"app"|"pr"|"ticket"|"doc"|other, title, question, reason, assigneeName, assignee?, app:{name, owner, url?} (what it is about), context? (kind-specific: pr {repo, number, author, url, files[], diff}; ticket {customer, company, subject, messages:[{from, text}]}; doc {title, owner, markdown}), minutes, points, from}; notifies them in Slack',
+      },
+      {
+        method: "POST",
+        path: "/v1/missions/:id/skip",
+        summary: "skip a mission you won't do — body {reason?}; no points",
+      },
+      {
+        method: "POST",
+        path: "/v1/missions/:id/answer",
+        summary: "record the expert's answer — body {answer}; awards the mission's points",
+      },
+      {
+        method: "POST",
+        path: "/v1/missions/:id/score",
+        summary: "grade the answer — body {bonus:0-30, reason}; bonus QM Points for specific, actionable feedback",
+      },
+      {
+        method: "POST",
+        path: "/v1/missions/:id/complete",
+        summary: "report the result after applying the feedback — body {note, url?}; tells the app's owner in Slack",
+      },
+    ],
+  },
+  {
     match: onPath("POST", "/v1/share"),
     when: () => false,
     routes: [

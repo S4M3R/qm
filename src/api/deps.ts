@@ -1,5 +1,7 @@
 import type { ExternalSlackPolicies } from "../resolution/external-slack.ts";
 import type { DurableMap } from "../persistence/durable-map.ts";
+import type { MissionBoardDoc } from "./routes/missions.ts";
+import type { ProfilePhotoDoc } from "./routes/profile-photos.ts";
 import type { BackgroundOwnershipStore } from "../runs/background-ownership.ts";
 import type { LoopIngressService } from "../loops/ingress.ts";
 import type { createSuggestedActivityService } from "../suggestions/activities.ts";
@@ -82,6 +84,9 @@ export interface ServerDeps {
   externalSlackPolicies?: ExternalSlackPolicies;
   checkReadiness?: (signal: AbortSignal) => Promise<void>;
   slackAccounts?: DurableMap<SlackAccountLink>;
+  missionBoards?: DurableMap<MissionBoardDoc>;
+  missions?: { slackWebhookUrl?: string; publicUrl?: string };
+  profilePhotos?: DurableMap<ProfilePhotoDoc>;
   composioReturns?: DurableMap<ComposioReturn>;
   composioFetch?: typeof fetch;
   suggestedActivities?: ReturnType<typeof createSuggestedActivityService>;
