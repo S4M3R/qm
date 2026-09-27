@@ -110,6 +110,8 @@ import { createSkillBundleStore, type SkillBundle, type SkillBundleStore } from 
 import { createGitFetcher, resolvePackAuth, type SkillPackFetcher } from "./skills/pack-fetcher.ts";
 import { installSeedSkills } from "./skills/seed.ts";
 import { createMemoryMap, createPostgresMapFactory, type DurableMap } from "./persistence/durable-map.ts";
+import type { MissionBoardDoc } from "./api/routes/missions.ts";
+import type { ProfilePhotoDoc } from "./api/routes/profile-photos.ts";
 import type { PersistedUiState, UiStateStore } from "./surfaces/ui-state.ts";
 import { slackUserClientFactory } from "./loops/sources/slack.ts";
 import { configurePgCaTrust, configurePgPooling } from "./persistence/pg-pool.ts";
@@ -516,6 +518,8 @@ export interface BuiltApp {
   identity: IdentityService;
   principalLinks: PrincipalLinkService;
   slackAccounts: DurableMap<SlackAccountLink>;
+  missionBoards: DurableMap<MissionBoardDoc>;
+  profilePhotos: DurableMap<ProfilePhotoDoc>;
   composioReturns: DurableMap<ComposioReturn>;
   keychain?: Keychain;
   serviceCreds: ServiceCredentialStore;
@@ -2787,6 +2791,8 @@ export function buildApp(
     identity,
     principalLinks,
     slackAccounts: artifactMap<SlackAccountLink>("slack_accounts"),
+    missionBoards: artifactMap<MissionBoardDoc>("mission_boards"),
+    profilePhotos: artifactMap<ProfilePhotoDoc>("profile_photos"),
     composioReturns,
     workspace,
     memory,
@@ -2927,6 +2933,12 @@ export function serverDeps(
     identity: built.identity,
     principalLinks: built.principalLinks,
     slackAccounts: built.slackAccounts,
+    missionBoards: built.missionBoards,
+    missions: {
+      ...(config.missionsSlackWebhookUrl ? { slackWebhookUrl: config.missionsSlackWebhookUrl } : {}),
+      ...(config.publicUrl ? { publicUrl: config.publicUrl } : {}),
+    },
+    profilePhotos: built.profilePhotos,
     composioReturns: built.composioReturns,
     ...(built.keychain ? { keychain: built.keychain } : {}),
     serviceCreds: built.serviceCreds,
